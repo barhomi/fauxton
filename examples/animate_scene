@@ -2,33 +2,39 @@
 from sys import path
 from os.path import dirname, join
 path.append(join(dirname(__file__), '..'))
+from pylab import imshow, show
 
 from matplotlib.pyplot import imshow
 from fauxton import Action, read_scene
+from fauxton import DepthSensor, SurfaceNormalSensor, VelocitySensor, read_scene
 
 #===============================================================================
 # Rendering
 #===============================================================================
 
-scene_path = join(dirname(__file__), 'scene.blend')
+scene_path = join(dirname(__file__), './scene.blend')
 scene = read_scene(scene_path)
 
 scene['Camera'].resolution = (64, 64)
-scene['Cube'].action = Action(position=[(0, 0, 0, 0), (100, 0, 1, 1)],
-                              rotation=[(0, 0, 0, 0, 1), (100, 0, 1, 0, 0)])
+scene['Camera'].rotation = (0.782, 0.482, 0.213, 0.334)
+pos =[(0, 3, -3, 3), (10, 3, -3, 0)]
+ac = Action(position=pos)
+
+#scene['Camera'].action = ac
+vel = scene.add(VelocitySensor(pose=scene['Camera'].pose))
+vel.action = ac
+
 def render_frame(t):
     scene.time = t
-    return scene['Camera'].render()
+    #return scene['Camera'].render()
+    return vel.render()
 
 #===============================================================================
 # Visualization
 #===============================================================================
 
-plot = imshow([[0]])
-plot.axes.set_title('Animation')
-plot.axes.set_axis_off()
-plot.figure.show()
-
 for t in range(100):
-    plot.set_data(render_frame(t))
-    plot.figure.canvas.draw()
+    im = render_frame(t)
+    im = (im**2).sum(-1)
+    imshow(im)
+    show()

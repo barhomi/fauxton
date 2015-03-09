@@ -69,17 +69,17 @@ bl_action = BlenderModule('''
     def get_rotation(action):
         return action.get('rotation', [])
 
-    def set_rotation(action, rotation):
+    def set_rotation(action, rotation, interpolation = 'LINEAR'):
         action['rotation'] = rotation
         for curve in list(action.fcurves):
             if curve.data_path == 'rotation_quaternion':
                 action.fcurves.remove(curve)
-        for i in range(4):
-            curve = action.fcurves.new('rotation_quaternion', i)
-            curve.keyframe_points.add(len(rotation))
+        for i in range(4): # for each rotation dimension (quaternion wxyz)
+            curve = action.fcurves.new('rotation_quaternion', i) #
+            curve.keyframe_points.add(len(rotation)) # add a number of keypoints frames
             for j, point in enumerate(rotation):
-                curve.keyframe_points[j].co = point[0], point[1 + i]
-                curve.keyframe_points[j].interpolation = 'LINEAR'
+                curve.keyframe_points[j].co = point[0], point[1 + i] # (frame_index, quaternion[i])
+                curve.keyframe_points[j].interpolation = interpolation
 
     def get_scale(action):
         return action.get('scale', [])
@@ -177,18 +177,18 @@ bl_scene = BlenderModule('''
         old_object_names = {o: o.name for o in bpy.data.objects}
         for global_name, local_name in scene['local_names'].items():
             bpy.data.objects[global_name].name = local_name
-    
+
         bpy.ops.wm.save_as_mainfile(filepath=path)
-        
+
         for o, name in old_object_names.items():
             o.name = name
 
         for s in bpy.data.scenes[1:]:
             [s.objects.link(o) for o in removed_objects[s.name]]
-    
+
         if conflicting_scene: conflicting_scene.name = '0'
         scene.name = old_scene_name
-  ''')        
+  ''')
 
 #===============================================================================
 # Public Symbols
@@ -286,8 +286,8 @@ class Action(BlenderResource):
         return array(bl_action.get_rotation(self), 'f')
 
     @rotation.setter
-    def rotation(self, rotation):
-        bl_action.set_rotation(self, [list(map(float, e)) for e in rotation])
+    def rotation(self, rotation, interpolation = 'LINEAR'):
+        bl_action.set_rotation(self, [list(map(float, e)) for e in rotation], interpolation)
 
     @property
     def scale(self):

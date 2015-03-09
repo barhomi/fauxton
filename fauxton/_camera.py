@@ -1,8 +1,10 @@
 from os.path import dirname
 from shutil import rmtree
 
-try: from cv2 import IMREAD_UNCHANGED, imread
+try: from scipy.misc import imread
+#try: from cv2 import IMREAD_UNCHANGED, imread
 except ImportError: imread = None
+from pylab import imshow, show
 
 from numpy import (array, arccos, arctan2, cos, cross, dot, hstack, load, pi,
                    sin, square, sqrt)
@@ -172,13 +174,19 @@ bl_camera = BlenderModule('''
         camera['render_engine'] = render_engine
 
     def render(camera, format):
-        try: path = join(mkdtemp(dir='/dev/shm'), 'image.exr')
-        except: path = join(mkdtemp(), 'image.exr')
+
+        if format == 'OPEN_EXR':
+            filename = 'image.exr'
+        elif format == 'PNG':
+            filename = 'image.png'
+
+        try: path = join(mkdtemp(dir='/dev/shm'), filename)
+        except: path = join(mkdtemp(), filename)
 
         scene = camera.users_scene[0]
         scene.camera = camera
         scene.render.filepath = path
-        scene.render.image_settings.file_format = 'OPEN_EXR'
+        scene.render.image_settings.file_format = format
         scene.render.resolution_y = 2 * get_resolution(camera)[0]
         scene.render.resolution_x = 2 * get_resolution(camera)[1]
         bpy.context.screen.scene = scene
@@ -188,9 +196,9 @@ bl_camera = BlenderModule('''
                 with use_render_pass(scene, get_render_pass(camera)):
                     bpy.ops.render.render(write_still=True)
 
-        if format == 'exr':
+        if format == 'PNG':
             return path
-        else:
+        elif format == 'OPEN_EXR':
             image = bpy.data.images.load(path)
             shape = (image.size[0], image.size[1], 4)
             save(path[:-3] + 'npy', reshape(array(image.pixels[:], 'f'), shape))
@@ -267,12 +275,14 @@ class Camera(Prop):
 
         :rtype: numpy.ndarray
         '''
-        if imread:
-            path = bl_camera.render(self, 'exr')
-            image = imread(path, IMREAD_UNCHANGED)[..., ::-1]
+
+        if self.render_pass is None:
+            path  = bl_camera.render(self, 'PNG')
+            image = scipy.misc.imread(path)
         else:
-            path = bl_camera.render(self, 'npy')
+            path  = bl_camera.render(self, 'OPEN_EXR')
             image = load(path)
+
         rmtree(dirname(path))
         return image
 
