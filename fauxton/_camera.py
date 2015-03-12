@@ -216,9 +216,9 @@ bl_camera = BlenderModule('''
         scene.render.resolution_x = 2 * get_resolution(camera)[1]
         bpy.context.screen.scene = scene
 
-        with use_material(scene, camera.get('material_name', None)):
-            with use_render_engine(scene, get_render_engine(camera)):
-                with use_render_pass(scene, get_render_pass(camera)):
+        with use_render_engine(scene, get_render_engine(camera)):
+            with use_render_pass(scene, get_render_pass(camera)):
+                with use_material(scene, camera.get('material_name', None)):
                     bpy.ops.render.render(write_still=True)
 
         if format == 'OPEN_EXR_MULTILAYER':
@@ -353,6 +353,14 @@ class DepthSensor(Camera):
     def __new__(cls, **properties):
         return Camera.__new__(cls, render_pass='z', **properties)
 
+    def render(self):
+        '''
+        Return a snapshot of the camera's containing scene.
+
+        :rtype: numpy.ndarray
+        '''
+        return Camera.render(self)[:, :, 0]
+
 class SurfaceNormalSensor(Camera):
     '''
     A camera that reports the surface normal at each pixel.
@@ -362,6 +370,14 @@ class SurfaceNormalSensor(Camera):
     def __new__(cls, **properties):
         return Camera.__new__(cls, render_pass='normal', **properties)
 
+    def render(self):
+        '''
+        Return a snapshot of the camera's containing scene.
+
+        :rtype: numpy.ndarray
+        '''
+        return Camera.render(self)[:, :, 0:3]
+
 class VelocitySensor(Camera):
     '''
     A camera that reports the velocity at each pixel.
@@ -370,3 +386,11 @@ class VelocitySensor(Camera):
     '''
     def __new__(cls, **properties):
         return Camera.__new__(cls, render_pass='vector', **properties)
+
+    def render(self):
+        '''
+        Return a snapshot of the camera's containing scene.
+
+        :rtype: numpy.ndarray
+        '''
+        return Camera.render(self)[:, :, 0:3]
