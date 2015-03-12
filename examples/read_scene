@@ -11,12 +11,18 @@ from fauxton import DepthSensor, SurfaceNormalSensor, read_scene
 # Rendering
 #===============================================================================
 
-scene_path = join(dirname(__file__), 'scene.blend')
+#scene_path = join(dirname(__file__), 'scene.blend')
+scene_path ="/home/youssef/src/darpa/data/blend_files/lamp2.blend"
 scene = read_scene(scene_path)
 
 optical_sensor = scene['Camera']
+optical_sensor.render_pass = 'object_index'
 normal_sensor = scene.add(SurfaceNormalSensor(pose=optical_sensor.pose))
 depth_sensor = scene.add(DepthSensor(pose=optical_sensor.pose))
+
+optical_sensor.resolution = (32, 32)
+normal_sensor.resolution = (32, 32)
+depth_sensor.resolution = (32, 32)
 
 optical_image = optical_sensor.render()
 normal_image = normal_sensor.render()
