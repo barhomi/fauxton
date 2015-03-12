@@ -91,36 +91,68 @@ bl_camera = BlenderModule('''
             links.new(src, snk)
 
     @contextmanager
-    def use_render_pass(scene, render_pass_name):
-        if render_pass_name is not None:
-            scene_use_nodes = scene.use_nodes
-            scene.use_nodes = True
-            nodes = scene.node_tree.nodes
-            links = scene.node_tree.links
-            layer = scene.render.layers[0]
-            passes = [a for a in dir(layer) if a.startswith('use_pass_')]
-            scene_enabled_passes = [p for p in passes if getattr(layer, p)]
-            scene_node_links = save_links(links)
+    def use_render_pass(scene, l_render_pass_name):
+        if type(l_render_pass_name) == list:
+            if len(l_render_pass_name) != 0:
+                scene_use_nodes = scene.use_nodes
+                scene.use_nodes = True
+                nodes = scene.node_tree.nodes
+                links = scene.node_tree.links
+                layer = scene.render.layers[0]
+                passes = [a for a in dir(layer) if a.startswith('use_pass_')]
+                scene_enabled_passes = [p for p in passes if getattr(layer, p)]
+                scene_node_links = save_links(links)
 
-            for p in passes: setattr(layer, p, False)
-            setattr(layer, 'use_pass_' + render_pass_name, True)
-            links.clear()
-            is_composite = lambda n: n.bl_idname == 'CompositorNodeComposite'
-            src_node = nodes.new('CompositorNodeRLayers')
-            snk_node = next(filter(is_composite, nodes), None)
-            snk_node = snk_node or nodes.new('CompositorNodeComposite')
-            src_socket = next(s for s in src_node.outputs if s.enabled)
-            snk_socket = snk_node.inputs['Image']
-            links.new(src_socket, snk_socket)
+                for p in passes: setattr(layer, p, False)
+                for render_pass in l_render_pass_name:
+                    setattr(layer, 'use_pass_' + render_pass, True)
+                links.clear()
+                is_composite = lambda n: n.bl_idname == 'CompositorNodeComposite'
+                src_node = nodes.new('CompositorNodeRLayers')
+                snk_node = next(filter(is_composite, nodes), None)
+                snk_node = snk_node or nodes.new('CompositorNodeComposite')
+                src_socket = next(s for s in src_node.outputs if s.enabled)
+                snk_socket = snk_node.inputs['Image']
+                links.new(src_socket, snk_socket)
+        else:
+            if l_render_pass_name is not None:
+                scene_use_nodes = scene.use_nodes
+                scene.use_nodes = True
+                nodes = scene.node_tree.nodes
+                links = scene.node_tree.links
+                layer = scene.render.layers[0]
+                passes = [a for a in dir(layer) if a.startswith('use_pass_')]
+                scene_enabled_passes = [p for p in passes if getattr(layer, p)]
+                scene_node_links = save_links(links)
+
+                for p in passes: setattr(layer, p, False)
+                setattr(layer, 'use_pass_' + l_render_pass_name, True)
+                links.clear()
+                is_composite = lambda n: n.bl_idname == 'CompositorNodeComposite'
+                src_node = nodes.new('CompositorNodeRLayers')
+                snk_node = next(filter(is_composite, nodes), None)
+                snk_node = snk_node or nodes.new('CompositorNodeComposite')
+                src_socket = next(s for s in src_node.outputs if s.enabled)
+                snk_socket = snk_node.inputs['Image']
+                links.new(src_socket, snk_socket)
 
         yield
 
-        if render_pass_name is not None:
-            nodes.remove(src_node)
-            setattr(layer, 'use_pass_' + render_pass_name, False)
-            for p in scene_enabled_passes: setattr(layer, p, True)
-            load_links(links, scene_node_links)
-            scene.use_nodes = scene_use_nodes
+        if type(l_render_pass_name) == list:
+            if len(l_render_pass_name)!= 0:
+                nodes.remove(src_node)
+                for render_pass in l_render_pass_name:
+                    setattr(layer, 'use_pass_' + render_pass, False)
+                for p in scene_enabled_passes: setattr(layer, p, True)
+                load_links(links, scene_node_links)
+                scene.use_nodes = scene_use_nodes
+        else:
+            if l_render_pass_name is not None:
+                nodes.remove(src_node)
+                setattr(layer, 'use_pass_' + l_render_pass_name, False)
+                for p in scene_enabled_passes: setattr(layer, p, True)
+                load_links(links, scene_node_links)
+                scene.use_nodes = scene_use_nodes
 
     @contextmanager
     def use_render_engine(scene, render_engine_name):
@@ -171,14 +203,15 @@ bl_camera = BlenderModule('''
     def set_render_engine(camera, render_engine):
         camera['render_engine'] = render_engine
 
-    def render(camera, format):
-        try: path = join(mkdtemp(dir='/dev/shm'), 'image.exr')
-        except: path = join(mkdtemp(), 'image.exr')
+    def render(camera, format = 'OPEN_EXR_MULTILAYER'):
+        try: path = join(mkdtemp(dir='/dev/shm'), 'image')
+        except: path = join(mkdtemp(), 'image')
 
         scene = camera.users_scene[0]
         scene.camera = camera
         scene.render.filepath = path
-        scene.render.image_settings.file_format = 'OPEN_EXR'
+        scene.render.image_settings.file_format = format
+        scene.render.image_settings.color_mode = 'RGBA'
         scene.render.resolution_y = 2 * get_resolution(camera)[0]
         scene.render.resolution_x = 2 * get_resolution(camera)[1]
         bpy.context.screen.scene = scene
@@ -188,6 +221,12 @@ bl_camera = BlenderModule('''
                 with use_render_pass(scene, get_render_pass(camera)):
                     bpy.ops.render.render(write_still=True)
 
+        if format == 'OPEN_EXR_MULTILAYER':
+            return path + '.exr'
+        if format == 'PNG':
+            return path + '.png'
+
+        """
         if format == 'exr':
             return path
         else:
@@ -196,6 +235,7 @@ bl_camera = BlenderModule('''
             save(path[:-3] + 'npy', reshape(array(image.pixels[:], 'f'), shape))
             image.user_clear(); bpy.data.images.remove(image)
             return path[:-3] + 'npy'
+        """
   ''')
 
 #===============================================================================
@@ -261,20 +301,15 @@ class Camera(Prop):
     def render_engine(self, render_engine):
         bl_camera.set_render_engine(self, render_engine)
 
-    def render(self):
+    def render(self, format = 'OPEN_EXR_MULTILAYER'):
         '''
         Return a snapshot of the camera's containing scene.
 
         :rtype: numpy.ndarray
         '''
-        if imread:
-            path = bl_camera.render(self, 'exr')
-            image = imread(path, IMREAD_UNCHANGED)[..., ::-1]
-        else:
-            path = bl_camera.render(self, 'npy')
-            image = load(path)
-        rmtree(dirname(path))
-        return image
+        path = bl_camera.render(self, format)
+
+        return path
 
     def look_at(self, target, roll=0):
         '''

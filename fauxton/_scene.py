@@ -177,18 +177,18 @@ bl_scene = BlenderModule('''
         old_object_names = {o: o.name for o in bpy.data.objects}
         for global_name, local_name in scene['local_names'].items():
             bpy.data.objects[global_name].name = local_name
-    
+
         bpy.ops.wm.save_as_mainfile(filepath=path)
-        
+
         for o, name in old_object_names.items():
             o.name = name
 
         for s in bpy.data.scenes[1:]:
             [s.objects.link(o) for o in removed_objects[s.name]]
-    
+
         if conflicting_scene: conflicting_scene.name = '0'
         scene.name = old_scene_name
-  ''')        
+  ''')
 
 #===============================================================================
 # Public Symbols
