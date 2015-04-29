@@ -38,6 +38,7 @@ def is_free(port):
 
 def free_port():
     port = randint(1025, 65535)
+    print port
     return port if is_free(port) else free_port()
 
 def make_server():
@@ -212,8 +213,8 @@ while active:
 '''
 
 def start_server():
-    blender_paths = ['/Applcations/blender.app/Contents/MacOS/blender',
-                     '/Applcations/Blender.app/Contents/MacOS/blender']
+    blender_paths = ['/Applications/blender.app/Contents/MacOS/blender',
+                     '/Applications/Blender.app/Contents/MacOS/blender']
     base = mkdtemp()
     with open(join(base, 'server.py'), 'w+') as f: f.write(SERVER_SOURCE)
     blender_path = next(iter(filter(isfile, blender_paths)), 'blender')

@@ -1,0 +1,9 @@
+.pypirc
+MANIFEST
+documentation/html/*
+dist/*
+*swp
+*blend
+build
+*blend1
+*swo
