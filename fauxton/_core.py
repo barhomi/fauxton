@@ -38,7 +38,6 @@ def is_free(port):
 
 def free_port():
     port = randint(1025, 65535)
-    print port
     return port if is_free(port) else free_port()
 
 def make_server():
@@ -120,6 +119,7 @@ def release(resource_id):
 def collect_garbage():
     def collect_assuming_lock():
         garbage_collected = False
+        #for collection in RESOURCE_COLLECTIONS.values():
         for collection in RESOURCE_COLLECTIONS:
             for resource in collection:
                 used_internally = resource.users or resource.use_fake_user
