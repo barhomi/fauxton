@@ -38,6 +38,7 @@ def is_free(port):
 
 def free_port():
     port = randint(1025, 65535)
+    print port
     return port if is_free(port) else free_port()
 
 def make_server():

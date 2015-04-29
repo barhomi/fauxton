@@ -17,6 +17,12 @@ bl_prop = BlenderModule('''
     def get_position(prop):
         return list(prop.location)
 
+    def get_color(prop):
+        return list(prop.color)
+
+    def set_color(prop, color):
+        prop.color = color
+
     def set_position(prop, position):
         prop.location = position
 
@@ -221,6 +227,14 @@ class Prop(BlenderResource):
     @position.setter
     def position(self, position):
         bl_prop.set_position(self, list(map(float, position)))
+
+    @property
+    def color(self):
+        return array(bl_prop.get_color(self))
+
+    @color.setter
+    def color(self, color):
+        bl_prop.set_color(self,list(map(float, color)))
 
     @property
     def rotation(self):
