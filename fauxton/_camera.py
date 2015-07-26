@@ -203,9 +203,9 @@ bl_camera = BlenderModule('''
     def set_render_engine(camera, render_engine):
         camera['render_engine'] = render_engine
 
-    def render(camera, format = 'OPEN_EXR_MULTILAYER'):
-        try: path = join(mkdtemp(dir='/dev/shm'), 'image')
-        except: path = join(mkdtemp(), 'image')
+    def render(camera, path, format = 'OPEN_EXR_MULTILAYER'):
+        #try: path = join(mkdtemp(dir='/dev/shm'), 'image')
+        #except: path = join(mkdtemp(), 'image')
 
         scene = camera.users_scene[0]
         scene.camera = camera
@@ -301,13 +301,13 @@ class Camera(Prop):
     def render_engine(self, render_engine):
         bl_camera.set_render_engine(self, render_engine)
 
-    def render(self, format = 'OPEN_EXR_MULTILAYER'):
+    def render(self, path, format = 'OPEN_EXR_MULTILAYER'):
         '''
         Return a snapshot of the camera's containing scene.
 
         :rtype: numpy.ndarray
         '''
-        path = bl_camera.render(self, format)
+        path = bl_camera.render(self, path, format)
 
         return path
 
