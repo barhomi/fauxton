@@ -17,6 +17,12 @@ bl_prop = BlenderModule('''
     def get_position(prop):
         return list(prop.location)
 
+    def get_color(prop):
+        return list(prop.color)
+
+    def set_color(prop, color):
+        prop.color = color
+
     def set_position(prop, position):
         prop.location = position
 
@@ -69,17 +75,17 @@ bl_action = BlenderModule('''
     def get_rotation(action):
         return action.get('rotation', [])
 
-    def set_rotation(action, rotation):
+    def set_rotation(action, rotation, interpolation = 'LINEAR'):
         action['rotation'] = rotation
         for curve in list(action.fcurves):
             if curve.data_path == 'rotation_quaternion':
                 action.fcurves.remove(curve)
-        for i in range(4):
-            curve = action.fcurves.new('rotation_quaternion', i)
-            curve.keyframe_points.add(len(rotation))
+        for i in range(4): # for each rotation dimension (quaternion wxyz)
+            curve = action.fcurves.new('rotation_quaternion', i) #
+            curve.keyframe_points.add(len(rotation)) # add a number of keypoints frames
             for j, point in enumerate(rotation):
-                curve.keyframe_points[j].co = point[0], point[1 + i]
-                curve.keyframe_points[j].interpolation = 'LINEAR'
+                curve.keyframe_points[j].co = point[0], point[1 + i] # (frame_index, quaternion[i])
+                curve.keyframe_points[j].interpolation = interpolation
 
     def get_scale(action):
         return action.get('scale', [])
@@ -223,6 +229,14 @@ class Prop(BlenderResource):
         bl_prop.set_position(self, list(map(float, position)))
 
     @property
+    def color(self):
+        return array(bl_prop.get_color(self))
+
+    @color.setter
+    def color(self, color):
+        bl_prop.set_color(self,list(map(float, color)))
+
+    @property
     def rotation(self):
         return array(bl_prop.get_rotation(self))
 
@@ -286,8 +300,8 @@ class Action(BlenderResource):
         return array(bl_action.get_rotation(self), 'f')
 
     @rotation.setter
-    def rotation(self, rotation):
-        bl_action.set_rotation(self, [list(map(float, e)) for e in rotation])
+    def rotation(self, rotation, interpolation = 'LINEAR'):
+        bl_action.set_rotation(self, [list(map(float, e)) for e in rotation], interpolation)
 
     @property
     def scale(self):

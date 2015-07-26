@@ -1,8 +1,10 @@
 from os.path import dirname
 from shutil import rmtree
 
-try: from cv2 import IMREAD_UNCHANGED, imread
+try: from scipy.misc import imread
+#try: from cv2 import IMREAD_UNCHANGED, imread
 except ImportError: imread = None
+from pylab import imshow, show
 
 from numpy import (array, arccos, arctan2, cos, cross, dot, hstack, load, pi,
                    sin, square, sqrt)
@@ -209,8 +211,22 @@ bl_camera = BlenderModule('''
 
         scene = camera.users_scene[0]
         scene.camera = camera
-        scene.render.filepath = path
-        scene.render.image_settings.file_format = format
+
+        # first render
+        scene.render.filepath = path + '.exr'
+        scene.render.image_settings.file_format = 'OPEN_EXR_MULTILAYER'
+        scene.render.image_settings.color_mode = 'RGBA'
+        scene.render.resolution_y = 2 * get_resolution(camera)[0]
+        scene.render.resolution_x = 2 * get_resolution(camera)[1]
+        bpy.context.screen.scene = scene
+
+        with use_render_engine(scene, get_render_engine(camera)):
+            with use_render_pass(scene, get_render_pass(camera)):
+                with use_material(scene, camera.get('material_name', None)):
+                    bpy.ops.render.render(write_still=True)
+
+        scene.render.filepath = path + '.png'
+        scene.render.image_settings.file_format = 'PNG'
         scene.render.image_settings.color_mode = 'RGBA'
         scene.render.resolution_y = 2 * get_resolution(camera)[0]
         scene.render.resolution_x = 2 * get_resolution(camera)[1]
@@ -222,20 +238,9 @@ bl_camera = BlenderModule('''
                     bpy.ops.render.render(write_still=True)
 
         if format == 'OPEN_EXR_MULTILAYER':
-            return path + '.exr'
+            return path
         if format == 'PNG':
             return path + '.png'
-
-        """
-        if format == 'exr':
-            return path
-        else:
-            image = bpy.data.images.load(path)
-            shape = (image.size[0], image.size[1], 4)
-            save(path[:-3] + 'npy', reshape(array(image.pixels[:], 'f'), shape))
-            image.user_clear(); bpy.data.images.remove(image)
-            return path[:-3] + 'npy'
-        """
   ''')
 
 #===============================================================================
