@@ -205,29 +205,17 @@ bl_camera = BlenderModule('''
     def set_render_engine(camera, render_engine):
         camera['render_engine'] = render_engine
 
-    def render(camera, path, color, format = 'OPEN_EXR_MULTILAYER'):
-        #try: path = join(mkdtemp(dir='/dev/shm'), 'image')
-        #except: path = join(mkdtemp(), 'image')
+    def render(camera, path, i_gpu = 0, format = 'OPEN_EXR_MULTILAYER'):
+
+        from bpy import context
+        C = bpy.context
+        C.user_preferences.system.compute_device = "CUDA_" + str(i_gpu)
 
         scene = camera.users_scene[0]
-        scene.world.horizon_color = color
         scene.camera = camera
 
-        # first render
-        #scene.render.filepath = path + '.exr'
-        #scene.render.image_settings.file_format = 'OPEN_EXR_MULTILAYER'
-        #scene.render.image_settings.color_mode = 'RGBA'
-        #scene.render.resolution_y = 2 * get_resolution(camera)[0]
-        #scene.render.resolution_x = 2 * get_resolution(camera)[1]
-        #bpy.context.screen.scene = scene
-
-        #with use_render_engine(scene, get_render_engine(camera)):
-        #    with use_render_pass(scene, get_render_pass(camera)):
-        #        with use_material(scene, camera.get('material_name', None)):
-        #            bpy.ops.render.render(write_still=True)
-
         scene.render.filepath = path
-        scene.render.image_settings.file_format = 'PNG'
+        scene.render.image_settings.file_format = format
         scene.render.image_settings.color_mode = 'RGBA'
         scene.render.resolution_y = get_resolution(camera)[0]
         scene.render.resolution_x = get_resolution(camera)[1]
@@ -307,13 +295,13 @@ class Camera(Prop):
     def render_engine(self, render_engine):
         bl_camera.set_render_engine(self, render_engine)
 
-    def render(self, path, color, format = 'OPEN_EXR_MULTILAYER'):
+    def render(self, path, i_gpu = 0, format = 'OPEN_EXR_MULTILAYER'):
         '''
         Return a snapshot of the camera's containing scene.
 
         :rtype: numpy.ndarray
         '''
-        path = bl_camera.render(self, path, color, format)
+        path = bl_camera.render(self, path, i_gpu, format)
 
         return path
 
