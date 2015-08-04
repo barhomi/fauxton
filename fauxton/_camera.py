@@ -207,12 +207,15 @@ bl_camera = BlenderModule('''
 
     def render(camera, path, i_gpu = 0, format = 'OPEN_EXR_MULTILAYER'):
 
+
+        scene = camera.users_scene[0]
+        scene.render.engine = 'CYCLES'
+        scene.camera = camera
+        scene.world.horizon_color = (1, 1, 1)
+
         from bpy import context
         C = bpy.context
         C.user_preferences.system.compute_device = "CUDA_" + str(i_gpu)
-
-        scene = camera.users_scene[0]
-        scene.camera = camera
 
         scene.render.filepath = path
         scene.render.image_settings.file_format = format
