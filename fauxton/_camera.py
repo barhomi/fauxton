@@ -216,6 +216,7 @@ bl_camera = BlenderModule('''
         from bpy import context
         C = bpy.context
         C.user_preferences.system.compute_device = "CUDA_" + str(i_gpu)
+        scene.cycles.device = 'GPU'
 
         scene.render.filepath = path
         scene.render.image_settings.file_format = format
