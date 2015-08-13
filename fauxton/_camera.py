@@ -205,24 +205,40 @@ bl_camera = BlenderModule('''
     def set_render_engine(camera, render_engine):
         camera['render_engine'] = render_engine
 
-    def render(camera, path, i_gpu = 0, format = 'OPEN_EXR_MULTILAYER'):
+    def preset_scene(scene, res, tile):
+        scene.render.engine = 'CYCLES'
+        scene.world.use_nodes = True
+        scene.render.resolution_x = res[0]
+        scene.render.resolution_y = res[1]
+        scene.render.resolution_percentage = 100
+        scene.render.tile_x = tile[0]
+        scene.render.tile_y = tile[1]
 
+        return scene
+
+    def render(camera, filepath, i_gpu = 0, preset = True, fileformat = 'OPEN_EXR_MULTILAYER'):
 
         scene = camera.users_scene[0]
         scene.render.engine = 'CYCLES'
         scene.camera = camera
         scene.world.horizon_color = (1, 1, 1)
+        res = [0,0]
+        res[0] = get_resolution(camera)[0]
+        res[1] = get_resolution(camera)[1]
+        if preset:
+            tile = res
+            preset_scene(scene, res, tile)
 
         from bpy import context
         C = bpy.context
         C.user_preferences.system.compute_device = "CUDA_" + str(i_gpu)
         scene.cycles.device = 'GPU'
 
-        scene.render.filepath = path
-        scene.render.image_settings.file_format = format
+        scene.render.filepath = filepath
+        scene.render.image_settings.file_format = fileformat
         scene.render.image_settings.color_mode = 'RGBA'
-        scene.render.resolution_y = get_resolution(camera)[0]
-        scene.render.resolution_x = get_resolution(camera)[1]
+        scene.render.resolution_y = res[0]
+        scene.render.resolution_x = res[1]
         bpy.context.screen.scene = scene
 
         with use_render_engine(scene, get_render_engine(camera)):
@@ -230,10 +246,10 @@ bl_camera = BlenderModule('''
                 with use_material(scene, camera.get('material_name', None)):
                     bpy.ops.render.render(write_still=True)
 
-        if format == 'OPEN_EXR_MULTILAYER':
-            return path
-        if format == 'PNG':
-            return path
+        if fileformat == 'OPEN_EXR_MULTILAYER':
+            return filepath
+        if fileformat == 'PNG':
+            return filepath
   ''')
 
 #===============================================================================
@@ -299,13 +315,14 @@ class Camera(Prop):
     def render_engine(self, render_engine):
         bl_camera.set_render_engine(self, render_engine)
 
-    def render(self, path, i_gpu = 0, format = 'OPEN_EXR_MULTILAYER'):
+    def render(self, filepath, i_gpu = 0, fileformat = 'OPEN_EXR_MULTILAYER'):
         '''
         Return a snapshot of the camera's containing scene.
 
         :rtype: numpy.ndarray
         '''
-        path = bl_camera.render(self, path, i_gpu, format)
+        preset = True
+        path = bl_camera.render(self, filepath, i_gpu, preset, fileformat)
 
         return path
 

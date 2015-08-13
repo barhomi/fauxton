@@ -194,6 +194,60 @@ bl_scene = BlenderModule('''
 
         if conflicting_scene: conflicting_scene.name = '0'
         scene.name = old_scene_name
+
+    def add_light(scene, light_path):
+
+        import bpy
+        import os
+        from math import pi
+
+        with bpy.data.libraries.load(light_path) as (data_from, data_to):
+            data_to.materials = data_from.materials
+
+        bpy.ops.object.camera_add(location = (3.9427, -2.73999, 3.79962), rotation = (pi/3, 0, pi/3))
+
+        bpy.ops.mesh.primitive_plane_add(radius = 8.5)
+        pl1 = bpy.context.object
+        pl1.location[0] = 17.64783
+        pl1.location[1] = 11.18092
+        pl1.location[2] = 8.22011
+        pl1.rotation_euler[1] = pi/2.84
+        pl1.rotation_euler[2] = pi/4.98
+        bpy.context.object.cycles_visibility.camera = False
+        mat = bpy.data.materials["key_light"]
+        pl1.data.materials.append(mat)
+        pl1.parent = bpy.data.objects['Camera']
+        pl1.matrix_parent_inverse = bpy.data.objects['Camera'].matrix_world.inverted()
+        scene.objects.link(pl1)
+
+        bpy.ops.mesh.primitive_plane_add(radius = 8.1)
+        pl2 = bpy.context.object
+        pl2.location[0] = 5.35114
+        pl2.location[1] = -20.50936
+        pl2.location[2] = 13.60414
+        pl2.rotation_euler[1] = pi/2.84
+        pl2.rotation_euler[2] = -pi/2.53
+        bpy.context.object.cycles_visibility.camera = False
+        mat = bpy.data.materials["filling_light"]
+        pl2.data.materials.append(mat)
+        pl2.parent = bpy.data.objects['Camera']
+        pl2.matrix_parent_inverse = bpy.data.objects['Camera'].matrix_world.inverted()
+        scene.objects.link(pl2)
+
+        bpy.ops.mesh.primitive_plane_add(radius = 8.875)
+        pl3 = bpy.context.object
+        pl3.location[0] = -22.28899
+        pl3.location[1] = 2.22551
+        pl3.location[2] = 11.02445
+        pl3.rotation_euler[1] = pi/1.69
+        pl3.rotation_euler[2] = -pi/9.81
+        bpy.context.object.cycles_visibility.camera = False
+        mat = bpy.data.materials["rim_light"]
+        pl3.data.materials.append(mat)
+        pl3.parent = bpy.data.objects['Camera']
+        pl3.matrix_parent_inverse = bpy.data.objects['Camera'].matrix_world.inverted()
+        scene.objects.link(pl3)
+
   ''')
 
 #===============================================================================
@@ -377,6 +431,15 @@ class Scene(BlenderResource):
         :rtype: Prop
         '''
         return bl_scene.remove(self, prop)
+
+    def add_light(self, lighting_file):
+        '''
+        add 3 sources of light to the scene
+
+        '''
+
+        return bl_scene.add_light(self, lighting_file)
+
 
 def read_scene(path):
     '''
