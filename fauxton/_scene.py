@@ -302,6 +302,38 @@ bl_scene = BlenderModule('''
         pl3.matrix_parent_inverse = bpy.data.objects['Camera'].matrix_world.inverted()
         scene.objects.link(pl3)
 
+    #------------------------------------------------------------------------------#
+    def random_materials(scene, l_mat_fnames):
+
+        import bpy, random
+
+        #l_mat_fnames = ['/home/youssef/src/darpa/data/materials/1339867231cycles_paintedmetal.blend']
+        n_rand_mat = len(l_mat_fnames)
+        print("number of random materials is ", n_rand_mat)
+        print("original number of materials: ", len(bpy.data.materials))
+
+        # loading all the random material fnames
+        for matf in l_mat_fnames:
+            with bpy.data.libraries.load(matf) as (data_from, data_to):
+                data_to.materials = data_from.materials
+
+        print("new total number of materials: ", len(bpy.data.materials))
+
+        # all the materials loaded and already existant in the file are in this list
+        l_mat = bpy.data.materials
+
+        # go though all objects in the file and assign them a random material
+        n_objects = len(bpy.data.objects)
+        for i_ob in range(n_objects):
+            try:
+                n_mat = len(bpy.data.objects[i_ob].data.materials)
+                for i_mat in range(n_mat):
+                    i_rand = random.randint(0,n_rand_mat)
+                    rand_mat = l_mat[-i_rand]
+                    bpy.data.objects[i_ob].data.materials[i_mat] = rand_mat
+            except AttributeError:
+                print("This object has no attribute material")
+
   ''')
 
 #===============================================================================
@@ -500,6 +532,13 @@ class Scene(BlenderResource):
 
         '''
         return bl_scene.add_light(self, lighting_file, color, light_intensity)
+
+    def random_materials(self, l_mat_fnames):
+        '''
+        this takes a list of material files and swaps the materials on the scene
+        '''
+
+        return bl_scene.random_materials(self, l_mat_fnames)
 
 
 def read_scene(path):
