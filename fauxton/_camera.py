@@ -216,11 +216,20 @@ bl_camera = BlenderModule('''
 
         return scene
 
-    def render(camera, filepath, i_gpu = 0, preset = True, fileformat = 'OPEN_EXR_MULTILAYER'):
-
+    def render(camera, filepath, i_gpu = 0, preset = True, l_passes = ['combined'], fileformat = 'OPEN_EXR_MULTILAYER'):
         scene = camera.users_scene[0]
         scene.render.engine = 'CYCLES'
         scene.camera = camera
+
+        for ppp in l_passes:
+            print(ppp)
+            if ppp == 'vector':
+                scene.render.layers[0].use_pass_vector = True
+            elif ppp == 'normal':
+                scene.render.layers[0].use_pass_normal = True
+            elif ppp == 'z':
+                scene.render.layers[0].use_pass_z = True
+
         scene.world.horizon_color = (1, 1, 1)
         res = [0,0]
         res[0] = get_resolution(camera)[0]
@@ -315,14 +324,14 @@ class Camera(Prop):
     def render_engine(self, render_engine):
         bl_camera.set_render_engine(self, render_engine)
 
-    def render(self, filepath, i_gpu = 0, fileformat = 'OPEN_EXR_MULTILAYER'):
+    def render(self, filepath, i_gpu = 0, l_passes = ['combined'], fileformat = 'OPEN_EXR_MULTILAYER'):
         '''
         Return a snapshot of the camera's containing scene.
 
         :rtype: numpy.ndarray
         '''
         preset = True
-        path = bl_camera.render(self, filepath, i_gpu, preset, fileformat)
+        path = bl_camera.render(self, filepath, i_gpu, preset, l_passes, fileformat)
 
         return path
 
