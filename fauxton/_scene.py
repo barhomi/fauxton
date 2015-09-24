@@ -200,24 +200,27 @@ bl_scene = BlenderModule('''
 
         import os
         # create plane
-        bpy.ops.mesh.primitive_plane_add(location=(0,0,0))
-        plane = bpy.context.object
+        if texture_fname == None:
+            return 
+        else:
+            bpy.ops.mesh.primitive_plane_add(location=(0,0,0))
+            plane = bpy.context.object
 
-        mat = bpy.data.materials.new('mat')
-        mat.use_nodes = True
-        nodes = mat.node_tree.nodes
-        n_imt = nodes.new('ShaderNodeTexImage')
-        add_material_to_object(plane, mat)
+            mat = bpy.data.materials.new('mat')
+            mat.use_nodes = True
+            nodes = mat.node_tree.nodes
+            n_imt = nodes.new('ShaderNodeTexImage')
+            add_material_to_object(plane, mat)
 
-        links = mat.node_tree.links
-        n_db = nodes[1] # Diffuse BSDF
-        n_mo = nodes[0] # Material Output
-        links.new(n_imt.outputs[0], n_db.inputs[0])
-        links.new(n_mo.inputs[0], n_db.outputs[0])
-        tex_fname = os.path.expanduser(texture_fname)
-        n_imt.image = bpy.data.images.load(tex_fname)
-        bpy.ops.uv.smart_project()
-        scene.objects.link(plane)
+            links = mat.node_tree.links
+            n_db = nodes[1] # Diffuse BSDF
+            n_mo = nodes[0] # Material Output
+            links.new(n_imt.outputs[0], n_db.inputs[0])
+            links.new(n_mo.inputs[0], n_db.outputs[0])
+            tex_fname = os.path.expanduser(texture_fname)
+            n_imt.image = bpy.data.images.load(tex_fname)
+            bpy.ops.uv.smart_project()
+            scene.objects.link(plane)
 
     #------------------------------------------------------------------------------#
     def add_material_to_object(ob, mat):
