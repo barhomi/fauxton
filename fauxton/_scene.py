@@ -200,7 +200,7 @@ bl_scene = BlenderModule('''
 
         import os
         # create plane
-        if texture_fname == None:
+        if texture_fname is None:
             return 
         else:
             bpy.ops.mesh.primitive_plane_add(location=(0,0,0))
