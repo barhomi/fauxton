@@ -110,6 +110,7 @@ bl_scene = BlenderModule('''
         scene = bpy.data.scenes.new('')
         scene.world = bpy.data.worlds.new('')
         scene.world.horizon_color = (0, 0, 0)
+        scene.render.engine = 'CYCLES'
         scene['__type__'] = type_
         scene['global_names'] = {}
         scene['local_names'] = {}
@@ -196,31 +197,46 @@ bl_scene = BlenderModule('''
         scene.name = old_scene_name
 
     #------------------------------------------------------------------------------#
+    def preset(scene):
+
+        scene.render.engine = 'CYCLES'
+        scene.world.use_nodes = True
+        scene.render.resolution_x = 256
+        scene.render.resolution_y = 256
+        scene.render.resolution_percentage = 100
+        scene.render.tile_x = 256
+        scene.render.tile_y = 256
+
+    #------------------------------------------------------------------------------#
+    def set_background(scene, color):
+        """docstring for set_white_background"""
+
+        scene.world.use_nodes = True
+        scene.world.node_tree.nodes['Background'].inputs[0].default_value = color
+
+    #------------------------------------------------------------------------------#
     def add_ground(scene, texture_fname):
 
         import os
         # create plane
-        if texture_fname is None:
-            return 
-        else:
-            bpy.ops.mesh.primitive_plane_add(location=(0,0,0))
-            plane = bpy.context.object
+        bpy.ops.mesh.primitive_plane_add(location=(0,0,0))
+        plane = bpy.context.object
 
-            mat = bpy.data.materials.new('mat')
-            mat.use_nodes = True
-            nodes = mat.node_tree.nodes
-            n_imt = nodes.new('ShaderNodeTexImage')
-            add_material_to_object(plane, mat)
+        mat = bpy.data.materials.new('mat')
+        mat.use_nodes = True
+        nodes = mat.node_tree.nodes
+        n_imt = nodes.new('ShaderNodeTexImage')
+        add_material_to_object(plane, mat)
 
-            links = mat.node_tree.links
-            n_db = nodes[1] # Diffuse BSDF
-            n_mo = nodes[0] # Material Output
-            links.new(n_imt.outputs[0], n_db.inputs[0])
-            links.new(n_mo.inputs[0], n_db.outputs[0])
-            tex_fname = os.path.expanduser(texture_fname)
-            n_imt.image = bpy.data.images.load(tex_fname)
-            bpy.ops.uv.smart_project()
-            scene.objects.link(plane)
+        links = mat.node_tree.links
+        n_db = nodes[1] # Diffuse BSDF
+        n_mo = nodes[0] # Material Output
+        links.new(n_imt.outputs[0], n_db.inputs[0])
+        links.new(n_mo.inputs[0], n_db.outputs[0])
+        tex_fname = os.path.expanduser(texture_fname)
+        n_imt.image = bpy.data.images.load(tex_fname)
+        bpy.ops.uv.smart_project()
+        scene.objects.link(plane)
 
     #------------------------------------------------------------------------------#
     def add_material_to_object(ob, mat):
@@ -520,6 +536,22 @@ class Scene(BlenderResource):
         :rtype: Prop
         '''
         return bl_scene.remove(self, prop)
+
+
+    def preset(self):
+
+        '''
+        a couple of basic presets to speed up the rendering
+        '''
+        return bl_scene.preset(self)
+
+    def set_background(self, color):
+        '''
+        set a uniform background with a color and intensity
+        :color a list of 3 float values
+        :intensity a float
+        '''
+        return bl_scene.set_background(self, color)
 
     def add_ground(self, texture_fname):
         '''

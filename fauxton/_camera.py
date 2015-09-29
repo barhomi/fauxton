@@ -216,7 +216,9 @@ bl_camera = BlenderModule('''
 
         return scene
 
-    def render(camera, filepath, i_gpu = 0, preset = True, l_passes = ['combined'], fileformat = 'OPEN_EXR_MULTILAYER'):
+    def render(camera, filepath, i_gpu = 0, preset = True, \
+        l_passes = ['combined'], fileformat = 'OPEN_EXR_MULTILAYER'):
+
         scene = camera.users_scene[0]
         scene.render.engine = 'CYCLES'
         scene.camera = camera
@@ -230,7 +232,6 @@ bl_camera = BlenderModule('''
             elif ppp == 'z':
                 scene.render.layers[0].use_pass_z = True
 
-        scene.world.horizon_color = (1, 1, 1)
         res = [0,0]
         res[0] = get_resolution(camera)[0]
         res[1] = get_resolution(camera)[1]
