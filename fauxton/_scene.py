@@ -197,12 +197,12 @@ bl_scene = BlenderModule('''
         scene.name = old_scene_name
 
     #------------------------------------------------------------------------------#
-    def preset(scene):
+    def preset(scene, res):
 
         scene.render.engine = 'CYCLES'
         scene.world.use_nodes = True
-        scene.render.resolution_x = 256
-        scene.render.resolution_y = 256
+        scene.render.resolution_x = res
+        scene.render.resolution_y = res
         scene.render.resolution_percentage = 100
         scene.render.tile_x = 256
         scene.render.tile_y = 256
@@ -538,12 +538,12 @@ class Scene(BlenderResource):
         return bl_scene.remove(self, prop)
 
 
-    def preset(self):
+    def preset(self, res):
 
         '''
         a couple of basic presets to speed up the rendering
         '''
-        return bl_scene.preset(self)
+        return bl_scene.preset(self, res)
 
     def set_background(self, color):
         '''
