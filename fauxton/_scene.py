@@ -201,9 +201,11 @@ bl_scene = BlenderModule('''
 
         scene.render.engine = 'CYCLES'
         scene.world.use_nodes = True
-        scene.render.resolution_x = res
-        scene.render.resolution_y = res
+        scene.render.resolution_x = res[0]
+        scene.render.resolution_y = res[1]
         scene.render.resolution_percentage = 100
+        assert(res[0]>=256)
+        assert(res[1]>=256)
         scene.render.tile_x = 256
         scene.render.tile_y = 256
 
