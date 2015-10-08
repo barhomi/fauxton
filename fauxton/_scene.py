@@ -251,7 +251,7 @@ bl_scene = BlenderModule('''
         return ob
 
     #------------------------------------------------------------------------------#
-    def add_light(scene, light_path, color = [1,1,1, 1], light_intensity = 10):
+    def add_light(scene, light_path, color = [1,1,1, 1], light_intensity = [1, 1, 1]):
 
         import bpy
         import os
@@ -275,7 +275,7 @@ bl_scene = BlenderModule('''
         # changing the light color and intensity
         mat = bpy.data.materials["key_light"]
         mat.node_tree.nodes[1].inputs[0].default_value = color
-        mat.node_tree.nodes[1].inputs[1].default_value = light_intensity
+        mat.node_tree.nodes[1].inputs[1].default_value = light_intensity[0]
         add_material_to_object(pl1, mat)
 
         pl1.parent = bpy.data.objects['Camera']
@@ -295,7 +295,7 @@ bl_scene = BlenderModule('''
         # changing the light color and intensity
         mat = bpy.data.materials["filling_light"]
         mat.node_tree.nodes[1].inputs[0].default_value = color
-        mat.node_tree.nodes[1].inputs[1].default_value = light_intensity
+        mat.node_tree.nodes[1].inputs[1].default_value = light_intensity[1]
         add_material_to_object(pl2, mat)
 
         pl2.data.materials.append(mat)
@@ -315,7 +315,7 @@ bl_scene = BlenderModule('''
 
         mat = bpy.data.materials["rim_light"]
         mat.node_tree.nodes[1].inputs[0].default_value = color
-        mat.node_tree.nodes[1].inputs[1].default_value = light_intensity
+        mat.node_tree.nodes[1].inputs[1].default_value = light_intensity[2]
         add_material_to_object(pl3, mat)
 
         pl3.data.materials.append(mat)
