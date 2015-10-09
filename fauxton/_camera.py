@@ -221,6 +221,13 @@ bl_camera = BlenderModule('''
 
         scene = camera.users_scene[0]
         scene.render.engine = 'CYCLES'
+
+        # making sure that the object pass index == 1 (for the object_index pass)
+        try:
+            scene.objects["object"].pass_index = 1
+        except:
+            pass
+
         scene.camera = camera
 
         for ppp in l_passes:
@@ -231,6 +238,8 @@ bl_camera = BlenderModule('''
                 scene.render.layers[0].use_pass_normal = True
             elif ppp == 'z':
                 scene.render.layers[0].use_pass_z = True
+            elif ppp == 'object_index':
+                scene.render.layers[0].use_pass_object_index = True
 
         res = [0,0]
         res[0] = get_resolution(camera)[0]
