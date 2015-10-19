@@ -228,7 +228,6 @@ bl_scene = BlenderModule('''
         mat.use_nodes = True
         nodes = mat.node_tree.nodes
         n_imt = nodes.new('ShaderNodeTexImage')
-        add_material_to_object(plane, mat)
 
         links = mat.node_tree.links
         n_db = nodes[1] # Diffuse BSDF
@@ -238,7 +237,9 @@ bl_scene = BlenderModule('''
         tex_fname = os.path.expanduser(texture_fname)
         n_imt.image = bpy.data.images.load(tex_fname)
         bpy.ops.uv.smart_project()
-        scene.objects.link(plane)
+        plane.data.materials.append(mat)
+
+        return plane
 
     #------------------------------------------------------------------------------#
     def add_material_to_object(ob, mat):
@@ -251,7 +252,14 @@ bl_scene = BlenderModule('''
         return ob
 
     #------------------------------------------------------------------------------#
-    def add_light(scene, light_path, color = [1,1,1, 1], light_intensity = [1, 1, 1]):
+    def add_light(scene, light_path, location, angle, color, light_intensity):
+        """
+        location = [0, 0, 0]
+        angle = [pi/2, pi/2]
+        color = [1, 1, 1, 1]
+        light_intensity = 1
+
+        """
 
         import bpy
         import os
@@ -265,64 +273,23 @@ bl_scene = BlenderModule('''
         #############################
         bpy.ops.mesh.primitive_plane_add(radius = 10)
         pl1 = bpy.context.object
-        pl1.location[0] = 17.64783
-        pl1.location[1] = 11.18092
-        pl1.location[2] = 8.22011
-        pl1.rotation_euler[1] = pi/2.84
-        pl1.rotation_euler[2] = pi/4.98
+        pl1.location[0] = location[0]
+        pl1.location[1] = location[1]
+        pl1.location[2] = location[2]
+        pl1.rotation_euler[1] = angle[0]
+        pl1.rotation_euler[2] = angle[1]
         bpy.context.object.cycles_visibility.camera = False
 
         # changing the light color and intensity
         mat = bpy.data.materials["key_light"]
         mat.node_tree.nodes[1].inputs[0].default_value = color
-        mat.node_tree.nodes[1].inputs[1].default_value = light_intensity[0]
+        mat.node_tree.nodes[1].inputs[1].default_value = light_intensity
         add_material_to_object(pl1, mat)
 
         pl1.parent = bpy.data.objects['Camera']
         pl1.matrix_parent_inverse = bpy.data.objects['Camera'].matrix_world.inverted()
-        scene.objects.link(pl1)
 
-        ################################
-        bpy.ops.mesh.primitive_plane_add(radius = 10)
-        pl2 = bpy.context.object
-        pl2.location[0] = 5.35114
-        pl2.location[1] = -20.50936
-        pl2.location[2] = 13.60414
-        pl2.rotation_euler[1] = pi/2.84
-        pl2.rotation_euler[2] = -pi/2.53
-        bpy.context.object.cycles_visibility.camera = False
-
-        # changing the light color and intensity
-        mat = bpy.data.materials["filling_light"]
-        mat.node_tree.nodes[1].inputs[0].default_value = color
-        mat.node_tree.nodes[1].inputs[1].default_value = light_intensity[1]
-        add_material_to_object(pl2, mat)
-
-        pl2.data.materials.append(mat)
-        pl2.parent = bpy.data.objects['Camera']
-        pl2.matrix_parent_inverse = bpy.data.objects['Camera'].matrix_world.inverted()
-        scene.objects.link(pl2)
-
-        ################################
-        bpy.ops.mesh.primitive_plane_add(radius = 10)
-        pl3 = bpy.context.object
-        pl3.location[0] = -22.28899
-        pl3.location[1] = 2.22551
-        pl3.location[2] = 11.02445
-        pl3.rotation_euler[1] = pi/1.69
-        pl3.rotation_euler[2] = -pi/9.81
-        bpy.context.object.cycles_visibility.camera = False
-
-        mat = bpy.data.materials["rim_light"]
-        mat.node_tree.nodes[1].inputs[0].default_value = color
-        mat.node_tree.nodes[1].inputs[1].default_value = light_intensity[2]
-        add_material_to_object(pl3, mat)
-
-        pl3.data.materials.append(mat)
-        pl3.parent = bpy.data.objects['Camera']
-        pl3.matrix_parent_inverse = bpy.data.objects['Camera'].matrix_world.inverted()
-        scene.objects.link(pl3)
-
+        return pl1
     #------------------------------------------------------------------------------#
     def random_materials(scene, l_mat_fnames):
 
@@ -563,12 +530,12 @@ class Scene(BlenderResource):
         return bl_scene.add_ground(self, texture_fname)
 
 
-    def add_light(self, lighting_file, color, light_intensity):
+    def add_light(self, lighting_file, location, angle, color, light_intensity):
         '''
         add 3 sources of light to the scene
 
         '''
-        return bl_scene.add_light(self, lighting_file, color, light_intensity)
+        return bl_scene.add_light(self, lighting_file, location, angle, color, light_intensity)
 
     def random_materials(self, l_mat_fnames):
         '''

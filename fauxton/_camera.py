@@ -223,6 +223,7 @@ bl_camera = BlenderModule('''
         scene.render.engine = 'CYCLES'
 
         # making sure that the object pass index == 1 (for the object_index pass)
+        #scene.objects["object"].pass_index = 1
         try:
             scene.objects["object"].pass_index = 1
         except:
@@ -244,9 +245,9 @@ bl_camera = BlenderModule('''
         res = [0,0]
         res[0] = get_resolution(camera)[0]
         res[1] = get_resolution(camera)[1]
-        if preset:
-            tile = res
-            preset_scene(scene, res, tile)
+        #if preset:
+        #    tile = res
+        #    preset_scene(scene, res, tile)
 
         from bpy import context
         C = bpy.context
