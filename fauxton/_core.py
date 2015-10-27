@@ -212,17 +212,32 @@ while active:
     server.handle_request()
 '''
 
+
 def start_server():
     blender_paths = ['/Applications/blender.app/Contents/MacOS/blender',
                      '/Applications/Blender.app/Contents/MacOS/blender']
     base = mkdtemp()
+    #import warnings ; warnings.warn("""not temp folder for fauxton""")
+    #base = "/tmp/blender_tmp/"
+    import os
+    #if not os.path.isdir(base):
+    #os.mkdir(base)
+
     with open(join(base, 'server.py'), 'w+') as f: f.write(SERVER_SOURCE)
     blender_path = next(iter(filter(isfile, blender_paths)), 'blender')
-    command = [blender_path, '-b', '-P', join(base, 'server.py')]
-    Popen(command, stdout=open(devnull, 'w'), stderr=open(devnull, 'w'))
+    command = [blender_path, '-b', '--verbose', '-d', '-P', join(base, 'server.py')]
+    print "#"*80
+    print "#"*80
+    print "#"*80
+    print "Command to start the blender server: ", command
+    print "#"*80
+    print "#"*80
+    print "#"*80
+    with open(join(base, "stdout.txt"),"wb") as out, open(join(base, "stderr.txt"),"wb") as err:
+        Popen(command, stdout=out, stderr=err)
     while not exists(join(base, 'lock.txt')): sleep(.001)
     with open(join(base, 'port.txt')) as f: port = f.read()
-    rmtree(base)
+    #rmtree(base)
     return ServerProxy("http://localhost:%s/" % port, allow_none=True)
 
 server = start_server()
