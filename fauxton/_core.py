@@ -224,13 +224,22 @@ def start_server_debug():
     return ServerProxy("http://127.0.0.1:%s/" % port, allow_none=True)
 
 def start_server():
-    blender_paths = ['/Applications/blender.app/Contents/MacOS/blender',
-                     '/Applications/Blender.app/Contents/MacOS/blender']
+    # Find path to blender
+    # First try BLENDER_PATH
+    import os, subprocess
+    blender_path = os.environ.get('BLENDER_PATH', '')
+    if blender_path == '':
+        # Next find it on PATH
+        try:
+            blender_path = subprocess.check_output(["which", "blender"]).strip()
+        except subprocess.CalledProcessError:
+            # Not on PATH? Then use youssef's hardcoded paths
+            blender_paths = ['/Applications/blender.app/Contents/MacOS/blender',
+                             '/Applications/Blender.app/Contents/MacOS/blender']
+            blender_path = next(iter(filter(isfile, blender_paths)), 'blender')
+    # Write and run temp blender server script
     base = mkdtemp()
-    import os
-
     with open(join(base, 'server.py'), 'w+') as f: f.write(SERVER_SOURCE)
-    blender_path = next(iter(filter(isfile, blender_paths)), 'blender')
     command = [blender_path, '-b', '--verbose', '-d', '-P', join(base, 'server.py')]
     print "#"*80
     print "Command to start the blender server: ", command
