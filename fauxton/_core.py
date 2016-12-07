@@ -27,6 +27,8 @@ from threading import Lock, Thread
 from time import sleep
 from traceback import format_exc
 from xmlrpc.server import SimpleXMLRPCServer
+import logging
+logging.basicConfig(level = logging.DEBUG)
 import bpy
 
 #===============================================================================
@@ -34,16 +36,17 @@ import bpy
 #===============================================================================
 
 def is_free(port):
-    return socket(AF_INET, SOCK_STREAM).connect_ex(('localhost', port)) != 0
+    return socket(AF_INET, SOCK_STREAM).connect_ex(('127.0.0.1', port)) != 0
 
 def free_port():
     port = randint(1025, 65535)
+    logging.debug("Port used is : %i" %port)
     return port if is_free(port) else free_port()
 
 def make_server():
     try:
         port = free_port()
-        server = SimpleXMLRPCServer(('localhost', port), allow_none=True)
+        server = SimpleXMLRPCServer(('127.0.0.1', port), allow_none=True)
         base = dirname(__file__)
         with open(join(base, 'port.txt'), 'w+') as f: f.write(str(port))
         open(join(base, 'lock.txt'), 'w+').close()
@@ -192,6 +195,7 @@ def call(module_id, function_name, *m_arguments):
             return 'error', format_exc()
 
 def shut_down():
+    logging.debug("shutting down the server")
     global active
     active = False
 
@@ -213,33 +217,39 @@ while active:
 '''
 
 
+def start_server_debug():
+
+    port = 65535
+    print "Starting already"
+    return ServerProxy("http://127.0.0.1:%s/" % port, allow_none=True)
+
 def start_server():
-    blender_paths = ['/Applications/blender.app/Contents/MacOS/blender',
-                     '/Applications/Blender.app/Contents/MacOS/blender']
-
+    # Find path to blender
+    # First try BLENDER_PATH
+    import os, subprocess
+    blender_path = os.environ.get('BLENDER_PATH', '')
+    if blender_path == '':
+        # Next find it on PATH
+        try:
+            blender_path = subprocess.check_output(["which", "blender"]).strip()
+        except subprocess.CalledProcessError:
+            # Not on PATH? Then use youssef's hardcoded paths
+            blender_paths = ['/Applications/blender.app/Contents/MacOS/blender',
+                             '/Applications/Blender.app/Contents/MacOS/blender']
+            blender_path = next(iter(filter(isfile, blender_paths)), 'blender')
+    # Write and run temp blender server script
     base = mkdtemp()
-    #import warnings ; warnings.warn("""not temp folder for fauxton""")
-    #base = "/tmp/blender_tmp/"
-    import os
-    #if not os.path.isdir(base):
-    #os.mkdir(base)
-
     with open(join(base, 'server.py'), 'w+') as f: f.write(SERVER_SOURCE)
-    blender_path = next(iter(filter(isfile, blender_paths)), 'blender')
     command = [blender_path, '-b', '--verbose', '-d', '-P', join(base, 'server.py')]
     print "#"*80
-    print "#"*80
-    print "#"*80
     print "Command to start the blender server: ", command
-    print "#"*80
-    print "#"*80
     print "#"*80
     with open(join(base, "stdout.txt"),"wb") as out, open(join(base, "stderr.txt"),"wb") as err:
         Popen(command, stdout=out, stderr=err)
     while not exists(join(base, 'lock.txt')): sleep(.001)
     with open(join(base, 'port.txt')) as f: port = f.read()
-    #rmtree(base)
-    return ServerProxy("http://localhost:%s/" % port, allow_none=True)
+    rmtree(base)
+    return ServerProxy("http://127.0.0.1:%s/" % port, allow_none=True)
 
 server = start_server()
 at_exit(server.shut_down)
@@ -311,12 +321,21 @@ class BlenderModule(object):
         self._id = server.add_module(source)
 
     def __del__(self):
-        try: server.remove_module(self)
-        except: pass
+        pass
+        """
+        try:
+            server.remove_module(self._id)
+        except:
+            print "8"*80
+            print "Could not remove module!!"
+            print "8"*80
+            pass
+        """
 
     def __getattr__(self, symbol):
         '''
         '''
+
         return lambda *x: call(self._id, symbol, *x)
 
 class BlenderError(Exception):
