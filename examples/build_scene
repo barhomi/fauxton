@@ -52,17 +52,22 @@ def render_frame(t):
     angle = t * pi / 32
     camera.position = (radius * cos(angle), radius * sin(angle), 0)
     camera.look_at(triangle.position)
-    return camera.render()
+    return camera.render("./test.png")
 
 #===============================================================================
 # Visualization
 #===============================================================================
 
+"""
 plot = imshow([[0]])
 plot.axes.set_title('Custom Scene')
 plot.axes.set_axis_off()
 plot.figure.show()
 
+"""
 for t in range(100):
+    render_frame(t)
+    """
     plot.set_data(render_frame(t))
     plot.figure.canvas.draw()
+    """

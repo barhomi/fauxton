@@ -216,6 +216,7 @@ while active:
 def start_server():
     blender_paths = ['/Applications/blender.app/Contents/MacOS/blender',
                      '/Applications/Blender.app/Contents/MacOS/blender']
+
     base = mkdtemp()
     #import warnings ; warnings.warn("""not temp folder for fauxton""")
     #base = "/tmp/blender_tmp/"
